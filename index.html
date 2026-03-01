@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>フォトフレームアプリ</title>
+    <title>さやま まやフォトフレーム</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: white;
+            color: black;
+            overflow-x: hidden;
+        }
         .frame-overlay {
             pointer-events: none;
             z-index: 10;
@@ -24,60 +33,105 @@
             cursor: pointer;
             border: 2px solid #eee;
             border-radius: 8px;
+            transition: all 0.2s;
         }
-        .frame-thumb.active { border-color: #000; }
+        .frame-thumb.active { border-color: #000; transform: scale(1.05); }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Fixed area for photo to prevent any shift below */
+        .photo-fixed-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
     </style>
 </head>
-<body class="bg-white min-h-screen flex flex-col items-center justify-center p-4 font-sans text-black">
+<body class="min-h-screen flex flex-col items-center justify-start p-4 pt-8">
 
-    <div class="max-w-md w-full space-y-6">
-        <div id="viewfinder" class="relative w-full aspect-square bg-black overflow-hidden border border-black">
-            <!-- カメラ映像のみを表示 -->
-            <video id="video-preview" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
-            
-            <img id="frame-preview" class="absolute inset-0 w-full h-full object-contain frame-overlay hidden" src="" alt="">
-            <img id="final-image" class="absolute inset-0 w-full h-full object-cover z-30 hidden" src="" alt="">
+    <div class="content-container">
+        <!-- Enlarged Title -->
+        <h1 class="text-2xl font-bold text-center mb-8 tracking-tighter">さやま まやフォトフレーム</h1>
 
-            <div id="start-overlay" class="absolute inset-0 flex items-center justify-center z-50 bg-black">
-                <button type="button" id="start-camera-btn" class="px-8 py-4 border border-white text-white font-bold text-xs tracking-widest uppercase">
-                    カメラを起動
-                </button>
-            </div>
+        <!-- Photo Area (Locked Position) -->
+        <div class="photo-fixed-box">
+            <div id="viewfinder" class="absolute inset-0 bg-black overflow-hidden border border-black shadow-lg">
+                <video id="video-preview" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
+                <img id="frame-preview" class="absolute inset-0 w-full h-full object-contain frame-overlay hidden" src="" alt="">
+                <img id="final-image" class="absolute inset-0 w-full h-full object-cover z-30 hidden" src="" alt="">
 
-            <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center z-40 bg-white hidden text-xs font-bold uppercase">
-                <div class="flex flex-col items-center gap-3">
-                    <div class="loader"></div>
-                    <span>Loading...</span>
+                <!-- Start Overlay -->
+                <div id="start-overlay" class="absolute inset-0 flex items-center justify-center z-50 bg-black">
+                    <button type="button" id="start-camera-btn" class="px-8 py-4 border border-white text-white font-bold text-xs tracking-widest uppercase hover:bg-white hover:text-black transition-colors">
+                        カメラを起動
+                    </button>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center z-40 bg-white hidden text-xs font-bold uppercase">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="loader"></div>
+                        <span>Loading...</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="space-y-4">
+        <!-- Control Area (Flex) -->
+        <div id="controls-wrapper" class="w-full flex flex-col space-y-4">
+            <!-- Frame Selector -->
             <div id="frame-selector-section" class="hidden">
-                <div class="flex justify-center gap-3">
-                    <div id="thumb-1" class="frame-thumb w-12 h-12 overflow-hidden active">
-                        <img id="img-thumb-1" class="w-full h-full object-contain" src="" alt="">
+                <div class="flex justify-center gap-4">
+                    <div id="thumb-0" class="frame-thumb w-14 h-14 overflow-hidden active flex items-center justify-center bg-gray-50">
+                        <img id="img-thumb-0" class="w-full h-full object-contain" src="" alt="A">
                     </div>
-                    <div id="thumb-2" class="frame-thumb w-12 h-12 overflow-hidden">
-                        <img id="img-thumb-2" class="w-full h-full object-contain" src="" alt="">
+                    <div id="thumb-1" class="frame-thumb w-14 h-14 overflow-hidden flex items-center justify-center bg-gray-50">
+                        <img id="img-thumb-1" class="w-full h-full object-contain" src="" alt="B">
                     </div>
                 </div>
             </div>
 
+            <!-- Capture Button -->
             <div id="capture-section" class="hidden">
-                <button type="button" id="capture-btn" class="w-full py-4 bg-black text-white font-bold rounded-full text-sm">
+                <button type="button" id="capture-btn" class="w-full py-4 bg-black text-white font-bold rounded-full text-sm hover:opacity-80 transition-opacity">
                     撮影する
                 </button>
             </div>
 
-            <div id="result-section" class="hidden space-y-4">
-                <p class="text-[10px] font-bold text-center text-neutral-400">画像を長押しで保存</p>
-                <button type="button" id="share-x-btn" class="w-full py-4 border border-black text-black font-bold rounded-full text-sm">
-                    Xに投稿
-                </button>
-                <button type="button" id="retake-btn" class="w-full text-center text-[10px] text-neutral-400 underline font-bold">
-                    撮り直す
-                </button>
+            <!-- Model Info -->
+            <div id="info-section" class="hidden space-y-3 pt-4 border-t border-gray-100">
+                <div class="text-left text-[11px] font-medium text-neutral-600">
+                    フレームモデル：<span id="info-name" class="font-bold text-black"></span>
+                </div>
+                <div id="sns-links" class="flex flex-row gap-2">
+                    <a id="link-youtube" href="#" target="_blank" class="flex-1 py-2 bg-white border border-gray-200 text-gray-700 font-bold rounded-full text-[10px] flex items-center justify-center gap-1 shadow-sm hover:bg-gray-50 transition-colors">
+                        <span class="text-[#ff4d4d]">●</span> YouTube 登録
+                    </a>
+                    <a id="link-x" href="#" target="_blank" class="flex-1 py-2 bg-white border border-gray-200 text-gray-700 font-bold rounded-full text-[10px] flex items-center justify-center gap-1 shadow-sm hover:bg-gray-50 transition-colors">
+                        <span class="text-black">●</span> X フォロー
+                    </a>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="result-section" class="hidden flex flex-col">
+                <p id="save-instruction" class="text-[10px] font-bold text-center text-neutral-400 mb-4">画像を長押しで保存</p>
+                <div class="flex flex-col space-y-3">
+                    <button type="button" id="share-x-btn" class="w-full py-4 bg-black text-white font-bold rounded-full text-sm hover:opacity-80 transition-opacity hidden">
+                        Xに投稿する
+                    </button>
+                    <button type="button" id="retake-btn" class="w-full py-4 border border-black text-black font-bold rounded-full text-sm">
+                        撮り直す
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -85,6 +139,21 @@
     <canvas id="merge-canvas" class="hidden"></canvas>
 
     <script>
+        const frameData = [
+            {
+                name: "さやま まや",
+                url: "https://www.dropbox.com/scl/fi/bc82xu2b1wgq96fi4edov/138_20260227111604.png?rlkey=4eduascd3lwkuuoc7tj6hy5v0&st=2jtuw7at&dl=1",
+                youtube: "https://youtube.com/@sayamamaya",
+                x: "https://x.com/sayama_live"
+            },
+            {
+                name: "さやま まや (ASMR)",
+                url: "https://www.dropbox.com/scl/fi/r04b39y41jmt74ml4p4v1/138_20260227115018.png?rlkey=947jlmcsrs2tn14b2e6sigt0k&st=zebywf3d&dl=1",
+                youtube: "https://youtube.com/@asmrsayamamaya",
+                x: "https://x.com/sayama_illust"
+            }
+        ];
+
         const video = document.getElementById('video-preview');
         const framePreview = document.getElementById('frame-preview');
         const finalImage = document.getElementById('final-image');
@@ -92,24 +161,23 @@
         const startOverlay = document.getElementById('start-overlay');
         const captureBtn = document.getElementById('capture-btn');
         const retakeBtn = document.getElementById('retake-btn');
-        const subscribeBtn = document.getElementById('subscribe-btn');
+        const shareXBtn = document.getElementById('share-x-btn');
+        const saveInstruction = document.getElementById('save-instruction');
         const loadingOverlay = document.getElementById('loading-overlay');
+        
         const frameSelectorSection = document.getElementById('frame-selector-section');
+        const infoSection = document.getElementById('info-section');
         const captureSection = document.getElementById('capture-section');
         const resultSection = document.getElementById('result-section');
-        const thumb1 = document.getElementById('thumb-1');
-        const thumb2 = document.getElementById('thumb-2');
-        const imgThumb1 = document.getElementById('img-thumb-1');
-        const imgThumb2 = document.getElementById('img-thumb-2');
+        
+        const infoName = document.getElementById('info-name');
+        const linkYoutube = document.getElementById('link-youtube');
+        const linkX = document.getElementById('link-x');
 
         let stream = null;
         let frameImg = new Image();
         let isFrameLoaded = false;
-
-        const FRAME_URLS = [
-            "https://www.dropbox.com/scl/fi/bc82xu2b1wgq96fi4edov/138_20260227111604.png?rlkey=4eduascd3lwkuuoc7tj6hy5v0&st=2jtuw7at&dl=1",
-            "https://www.dropbox.com/scl/fi/r04b39y41jmt74ml4p4v1/138_20260227115018.png?rlkey=947jlmcsrs2tn14b2e6sigt0k&st=zebywf3d&dl=1"
-        ];
+        let longPressTimer = null;
 
         function getProxiedUrl(url) {
             return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/dl=[01]/, "raw=1"))}`;
@@ -120,9 +188,9 @@
             if (success) {
                 startOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('hidden');
-                imgThumb1.src = getProxiedUrl(FRAME_URLS[0]);
-                imgThumb2.src = getProxiedUrl(FRAME_URLS[1]);
-                loadFrame(FRAME_URLS[0]);
+                document.getElementById('img-thumb-0').src = getProxiedUrl(frameData[0].url);
+                document.getElementById('img-thumb-1').src = getProxiedUrl(frameData[1].url);
+                loadFrame(0);
             }
         };
 
@@ -141,9 +209,15 @@
             }
         }
 
-        function loadFrame(url) {
+        function loadFrame(index) {
             isFrameLoaded = false;
-            const proxiedUrl = getProxiedUrl(url);
+            const data = frameData[index];
+            const proxiedUrl = getProxiedUrl(data.url);
+            
+            infoName.textContent = data.name;
+            linkYoutube.href = data.youtube;
+            linkX.href = data.x;
+
             frameImg = new Image();
             frameImg.crossOrigin = "anonymous";
             frameImg.onload = () => {
@@ -152,14 +226,21 @@
                 loadingOverlay.classList.add('hidden');
                 framePreview.classList.remove('hidden');
                 frameSelectorSection.classList.remove('hidden');
+                infoSection.classList.remove('hidden');
                 captureSection.classList.remove('hidden');
             };
             frameImg.src = proxiedUrl;
         }
 
-        thumb1.onclick = () => { setActiveThumb(thumb1); loadFrame(FRAME_URLS[0]); };
-        thumb2.onclick = () => { setActiveThumb(thumb2); loadFrame(FRAME_URLS[1]); };
-        function setActiveThumb(t) { thumb1.classList.remove('active'); thumb2.classList.remove('active'); t.classList.add('active'); }
+        document.getElementById('thumb-0').onclick = () => { setActiveThumb(0); loadFrame(0); };
+        document.getElementById('thumb-1').onclick = () => { setActiveThumb(1); loadFrame(1); };
+
+        function setActiveThumb(index) {
+            document.querySelectorAll('.frame-thumb').forEach((el, i) => {
+                if(i === index) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+        }
 
         captureBtn.onclick = () => {
             const canvas = document.getElementById('merge-canvas');
@@ -171,40 +252,65 @@
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, size, size);
 
-            // カメラ映像を描画
             const vW = video.videoWidth;
             const vH = video.videoHeight;
             const min = Math.min(vW, vH);
             ctx.drawImage(video, (vW - min) / 2, (vH - min) / 2, min, min, 0, 0, size, size);
 
-            // フレームを重畳
             if (isFrameLoaded) {
                 ctx.drawImage(frameImg, 0, 0, size, size);
             }
 
             finalImage.src = canvas.toDataURL('image/jpeg', 0.9);
             finalImage.classList.remove('hidden');
-            resultSection.classList.remove('hidden');
             
+            shareXBtn.classList.add('hidden');
+            saveInstruction.textContent = "画像を長押しで保存";
+            
+            resultSection.classList.remove('hidden');
             frameSelectorSection.classList.add('hidden');
+            infoSection.classList.add('hidden');
             captureSection.classList.add('hidden');
             video.classList.add('hidden');
             framePreview.classList.add('hidden');
+        };
+
+        const startLongPress = () => {
+            longPressTimer = setTimeout(() => {
+                shareXBtn.classList.remove('hidden');
+                saveInstruction.textContent = "保存した画像はXに投稿できます。";
+            }, 800);
+        };
+
+        const cancelLongPress = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+
+        finalImage.addEventListener('touchstart', startLongPress);
+        finalImage.addEventListener('touchend', cancelLongPress);
+        finalImage.addEventListener('touchmove', cancelLongPress);
+        finalImage.addEventListener('mousedown', startLongPress);
+        finalImage.addEventListener('mouseup', cancelLongPress);
+        finalImage.addEventListener('mouseleave', cancelLongPress);
+
+        shareXBtn.onclick = () => {
+            const text = encodeURIComponent("さやま まや フォトフレームで撮影しました！ #さやままや #フォトフレーム");
+            const url = "https://twitter.com/intent/tweet?text=" + text;
+            window.open(url, '_blank');
         };
 
         retakeBtn.onclick = () => {
             finalImage.classList.add('hidden');
             resultSection.classList.add('hidden');
             frameSelectorSection.classList.remove('hidden');
+            infoSection.classList.remove('hidden');
             captureSection.classList.remove('hidden');
             framePreview.classList.remove('hidden');
             video.classList.remove('hidden');
         };
-
-        document.getElementById('share-x-btn').onclick = () => {
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("フォトフレームで撮影しました！")}`, '_blank');
-        };
-        
     </script>
 </body>
 </html>
